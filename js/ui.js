@@ -92,4 +92,29 @@ export class UI {
       }
     }
   }
+
+  // Update sound vol. UI
+  updateVolumeDisplay(soundId, volume) {
+    const card = document.querySelector(`[data-sound="${soundId}"]`);
+
+    if (card) {
+      // Update numb. display
+      const volValue = card.querySelector(".volume-value");
+      if (volValue) {
+        volValue.textContent = volume;
+      }
+
+      // Update volume-bar UI
+      const volBarFill = card.querySelector(".volume-bar-fill");
+      if (volBarFill) {
+        volBarFill.style.width = `${volume}%`;
+      }
+
+      // Update slider position
+      const slider = card.querySelector(".volume-slider");
+      if (slider) {
+        slider.value = volume;
+      }
+    }
+  }
 }
