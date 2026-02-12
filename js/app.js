@@ -10,6 +10,7 @@ class AmbientMixer {
     this.timer = null;
     this.currentSoundState = {};
     this.isInitialized = false;
+    this.masterVolume = 100;
   }
 
   init() {
@@ -24,7 +25,7 @@ class AmbientMixer {
 
       // Load all sound files
       this.loadAllSounds();
-      this.soundManager.loadSound("rain", "audio/rain.mp3");
+      //this.soundManager.loadSound("rain", "audio/rain.mp3");
       this.isInitialized = true;
     } catch (error) {
       console.log("❌ Failed to initialize app:", error);
@@ -52,12 +53,21 @@ class AmbientMixer {
         this.setSoundVolume(soundId, volume);
       }
     });
+
+    // Handle master-volume slider 🎚️
+    const masterVolumeSlider = document.getElementById("masterVolume");
+    if (masterVolumeSlider) {
+      masterVolumeSlider.addEventListener("input", (e) => {
+        const volume = parseInt(e.target.value);
+        this.setMasterVolume(volume);
+      });
+    }
   }
 
   // Load all sound files
   loadAllSounds() {
     sounds.forEach((sound) => {
-      const audioURL = `audio/${sound}`;
+      const audioURL = `audio/${sound.file}`;
       const success = this.soundManager.loadSound(sound.id, audioURL);
       if (!success) {
         console.log(`Cound not load sound: ${sound.name} from ${audioURL}`);
@@ -81,7 +91,7 @@ class AmbientMixer {
 
       let volume = parseInt(slider.value);
 
-      // if slider is at 0, default to 5️⃣%
+      // if slider is at 0, default to 5️⃣0️⃣%
       if (volume === 0) {
         volume = 50;
         this.ui.updateVolumeDisplay(soundId, volume);
@@ -100,11 +110,52 @@ class AmbientMixer {
 
   // Set sound vol.
   setSoundVolume(soundId, volume) {
-    // Update sound vol. in manager
-    this.soundManager.setVolume(soundId, volume);
+    // Calculate effective vol. with master-volume.
+    const effectiveVol = (volume * this.masterVolume) / 100;
+
+    // Update sound vol. with the scaled volume
+    const audio = this.soundManager.audioElements.get(soundId);
+
+    if (audio) {
+      audio.volume = effectiveVol / 100;
+    }
 
     // Update vol. UI-display
     this.ui.updateVolumeDisplay(soundId, volume);
+  }
+
+  // Set master vol.
+  setMasterVolume(volume) {
+    this.masterVolume = volume;
+
+    // update display
+    const masterVolumeValue = document.getElementById("masterVolumeValue");
+    if (masterVolumeValue) {
+      masterVolumeValue.textContent = `${volume}%`;
+    }
+
+    // Apply master volumne to all curr. playing sounds
+    this.applyMasterVolumeToAll();
+  }
+
+  // Apply master vol. to all playing sounds
+  applyMasterVolumeToAll() {
+    for (const [soundId, audio] of this.soundManager.audioElements) {
+      if (!audio.paused) {
+        const card = document.querySelector(`[data-sound="${soundId}"]`);
+        const slider = card?.querySelector(".volume-slider");
+
+        if (slider) {
+          const indiVidualVol = parseInt(slider.value);
+
+          // Calculate effective vol. (individual * master / 100)
+          const effectiveVol = (indiVidualVol * this.masterVolume) / 100;
+
+          // Apply to the actual audio element
+          audio.volume = effectiveVol / 100;
+        }
+      }
+    }
   }
 }
 
