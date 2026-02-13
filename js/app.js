@@ -25,22 +25,32 @@ class AmbientMixer {
 
       // Load all sound files
       this.loadAllSounds();
-      //this.soundManager.loadSound("rain", "audio/rain.mp3");
+
+      // Initialize sound states after loading sounds
+      sounds.forEach((sound) => {
+        this.currentSoundState[sound.id] = 0;
+      });
+
       this.isInitialized = true;
     } catch (error) {
       console.log("❌ Failed to initialize app:", error);
     }
   }
 
-  // Setup all event listeners
+  // Setup all event listeners 🖱️
   setUpEventListeners() {
     // Handle all clicks with evt-delegation
     document.addEventListener("click", async (evt) => {
       // Check if a play-btn. was clicked
       if (evt.target.closest(".play-btn")) {
         const soundId = evt.target.closest(".play-btn").dataset.sound;
-        // console.log(soundId);
         await this.toggleSound(soundId);
+      }
+
+      // Check if a default preset-btn. was clicked
+      if (evt.target.closest(".preset-btn")) {
+        const presetKey = evt.target.closest(".preset-btn").dataset.preset;
+        this.loadPreset(presetKey);
       }
     });
 
@@ -163,6 +173,10 @@ class AmbientMixer {
 
   // Set sound vol.
   setSoundVolume(soundId, volume) {
+    // Set sound vol. in state
+    this.currentSoundState[soundId] = volume;
+    // console.log(this.currentSoundState); // keeps track of our state{}
+
     // Calculate effective vol. with master-volume.
     const effectiveVol = (volume * this.masterVolume) / 100;
 
@@ -230,7 +244,7 @@ class AmbientMixer {
     this.ui.updateMainPlayButton(anySoundsPlaying);
   }
 
-  // Rsest everything to default state 💯
+  // Reset everything to default state 💯
   resetAll() {
     // Stop all sounds
     this.soundManager.stopAll();
@@ -238,14 +252,63 @@ class AmbientMixer {
     // Reset the master-vol.
     this.masterVolume = 100;
 
+    // Reset sound states
+    sounds.forEach((sound) => {
+      this.currentSoundState[sound.id] = 0;
+    });
+
     // Reset UI
     this.ui.resetUi();
 
-    console.log(`All sounds and settings reset ☑️`);
+    // console.log(`All sounds and settings reset ☑️`);
+  }
+
+  // Load a preset config.
+  loadPreset(presetKey) {
+    const preset = defaultPresets[presetKey];
+    if (!preset) {
+      console.error(`☑️ Preset ${presetKey} not found!`);
+      return;
+    }
+    // First =, stop all sounds
+    this.soundManager.stopAll();
+
+    // Reset all volumes to 0
+    sounds.forEach((sound) => {
+      this.currentSoundState[sound.id] = 0;
+      this.ui.updateVolumeDisplay(sound.id, 0);
+      this.ui.updateSoundPlayButton(sound.id, false);
+    });
+
+    // Apply the preset volumes
+    for (const [soundId, volume] of Object.entries(preset.sounds)) {
+      // Set volume state
+      this.currentSoundState[soundId] = volume;
+
+      // Update UI
+      this.ui.updateVolumeDisplay(soundId, volume);
+
+      // Calculate effective vol.
+      const effectiveVol = (volume * this.masterVolume) / 100;
+
+      // Get audio element and set value
+      const audio = this.soundManager.audioElements.get(soundId);
+      if (audio) {
+        audio.volume = effectiveVol / 100;
+
+        // Play sound
+        audio.play();
+        this.ui.updateSoundPlayButton(soundId, true);
+      }
+    }
+
+    // Update main play-btn and state
+    this.soundManager.isPlaying = true;
+    this.ui.updateMainPlayButton(true);
   }
 }
 
-// Initialize app when DOM is ready
+// Initialize app. when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   const app = new AmbientMixer();
   app.init();
