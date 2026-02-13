@@ -80,4 +80,15 @@ export class SoundManager {
     }
     this.isPlaying = false;
   }
+
+  // Rest/Stop all sounds
+  stopAll() {
+    for (const [soundId, audio] of this.audioElements) {
+      if (!audio.paused) {
+        audio.pause();
+      }
+      audio.currentTime = 0; // Reset to beginning
+    }
+    this.isPlaying = false;
+  }
 }
