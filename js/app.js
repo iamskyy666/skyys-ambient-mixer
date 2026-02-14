@@ -1,3 +1,4 @@
+import { PresetManager } from "./presetManager.js";
 import { sounds, defaultPresets } from "./soundData.js";
 import { SoundManager } from "./soundManager.js";
 import { UI } from "./ui.js";
@@ -8,6 +9,7 @@ class AmbientMixer {
     this.soundManager = new SoundManager();
     this.ui = new UI();
     this.timer = null;
+    this.presetManager = new PresetManager();
     this.currentSoundState = {};
     this.isInitialized = false;
     this.masterVolume = 100;
@@ -86,6 +88,39 @@ class AmbientMixer {
         this.resetAll();
       });
     }
+
+    // Save preset-btn
+    const saveBtn = document.getElementById("savePreset");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", () => {
+        this.showSavePrsetModal();
+      });
+    }
+
+    // Confirm Save preset-btn
+    const confirmSaveBtn = document.getElementById("confirmSave");
+    if (confirmSaveBtn) {
+      confirmSaveBtn.addEventListener("click", () => {
+        this.saveCurrentPreset();
+      });
+    }
+
+    // Cancel save-btn
+    const canecelSaveBtn = document.getElementById("cancelSave");
+    if (canecelSaveBtn) {
+      canecelSaveBtn.addEventListener("click", () => {
+        this.ui.hideModal();
+      });
+    }
+
+    // Close modal if backdrop is clicked
+    if (this.ui.modal) {
+      this.ui.modal.addEventListener("click", (evt) => {
+        if (evt.target === this.ui.modal) {
+          this.ui.hideModal();
+        }
+      });
+    }
   }
 
   // Load all sound files
@@ -121,6 +156,9 @@ class AmbientMixer {
         this.ui.updateVolumeDisplay(soundId, volume);
       }
 
+      // Set curr. sound-state
+      this.currentSoundState[soundId] = volume;
+
       // sound is off, we wanna turn it on
       this.soundManager.setVolume(soundId, 50);
       await this.soundManager.playSound(soundId);
@@ -129,6 +167,9 @@ class AmbientMixer {
       // sound is on, we wanna shut it off
       this.soundManager.pauseSound(soundId);
       this.ui.updateSoundPlayButton(soundId, false);
+
+      // Set curr. sound-state to 0 when paused
+      this.currentSoundState[soundId] = 0;
     }
 
     // update main play btn state
@@ -142,7 +183,8 @@ class AmbientMixer {
       this.soundManager.pauseAll();
       this.ui.updateMainPlayButton(false);
       sounds.forEach((sound) => {
-        this.ui.updateSoundPlayButton(sound.soundId);
+        //this.ui.updateSoundPlayButton(sound.soundId);
+        this.ui.updateSoundPlayButton(sound.id, false);
       });
     } else {
       // toggle sounds ON
@@ -305,6 +347,43 @@ class AmbientMixer {
     // Update main play-btn and state
     this.soundManager.isPlaying = true;
     this.ui.updateMainPlayButton(true);
+  }
+
+  // Show save-preset modal
+  showSavePrsetModal() {
+    // Check if any sounds are active
+    const hasActiveSounds = Object.values(this.currentSoundState).some(
+      (v) => v > 0,
+    ); // v = volume.
+    if (!hasActiveSounds) {
+      alert(`🔇 No active sounds for preset!`);
+      return;
+    }
+
+    this.ui.showModal();
+  }
+
+  // Save curr. preset
+  saveCurrentPreset() {
+    const nameInput = document.getElementById("presetName");
+    const name = nameInput.value.trim();
+
+    if (!name) {
+      alert(`⚠️ Please enter a preset name!`);
+      return;
+    }
+
+    if (this.presetManager.presetNameExists(name)) {
+      alert(`⚠️ A preset with the name ${name} already exists!`);
+      return;
+    }
+
+    const presetId = this.presetManager.savePreset(
+      name,
+      this.currentSoundState,
+    );
+    this.ui.hideModal();
+    console.log(`✅ Preset "${name}" saved successfully with ID: ${presetId}!`);
   }
 }
 

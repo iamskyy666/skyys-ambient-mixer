@@ -81,7 +81,7 @@ export class SoundManager {
     this.isPlaying = false;
   }
 
-  // Rest/Stop all sounds
+  // Reset/Stop all sounds
   stopAll() {
     for (const [soundId, audio] of this.audioElements) {
       if (!audio.paused) {
