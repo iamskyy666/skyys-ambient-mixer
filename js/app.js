@@ -1,6 +1,7 @@
 import { PresetManager } from "./presetManager.js";
 import { sounds, defaultPresets } from "./soundData.js";
 import { SoundManager } from "./soundManager.js";
+import { Timer } from "./timer.js";
 import { UI } from "./ui.js";
 
 class AmbientMixer {
@@ -8,7 +9,10 @@ class AmbientMixer {
   constructor() {
     this.soundManager = new SoundManager();
     this.ui = new UI();
-    this.timer = null;
+    this.timer = new Timer(
+      () => this.onTimerComplete(),
+      (minutes, seconds) => this.ui.updateTimerDisplay(minutes, seconds),
+    );
     this.presetManager = new PresetManager();
     this.currentSoundState = {};
     this.isInitialized = false;
@@ -67,7 +71,6 @@ class AmbientMixer {
         this.deleteCustomPreset(presetId);
         return;
       }
-
 
       // Check if a default preset-btn. was clicked
       if (evt.target.closest(".preset-btn")) {
@@ -145,6 +148,21 @@ class AmbientMixer {
       this.ui.modal.addEventListener("click", (evt) => {
         if (evt.target === this.ui.modal) {
           this.ui.hideModal();
+        }
+      });
+    }
+
+    // Timer select
+    const timerSelect = document.getElementById("timerSelect");
+    if (timerSelect) {
+      timerSelect.addEventListener("change", (e) => {
+        const minutes = parseInt(e.target.value);
+        // const minutes = 0.1; // for testing
+        if (minutes > 0) {
+          this.timer.start(minutes);
+          console.log(`Time started for ${minutes} minutes 🕑`);
+        } else {
+          this.timer.stop();
         }
       });
     }
@@ -322,6 +340,12 @@ class AmbientMixer {
     // Reset the master-vol.
     this.masterVolume = 100;
 
+    // Reset timer
+    this.timer.stop();
+    if (this.ui.timerSelect) {
+      this.ui.timerSelect.value = "0";
+    }
+
     // Reset active preset
     this.ui.setActivePreset(null);
 
@@ -453,6 +477,30 @@ class AmbientMixer {
     if (this.presetManager.deletePreset(presetId)) {
       this.ui.removeCustomPreset(presetId);
       this.ui.setActivePreset(null);
+    }
+  }
+
+  // Timer complete callback
+  onTimerComplete() {
+    // Stop all sounds
+    this.soundManager.pauseAll();
+    this.ui.updateMainPlayButton(false);
+
+    // Update individual btns
+    sounds.forEach((sound) => {
+      this.ui.updateSoundPlayButton(sound.id, false);
+    });
+
+    // Reset timer-dropdown
+    const timerSelect = document.getElementById("timerSelect");
+    if (timerSelect) {
+      timerSelect.value = "0";
+    }
+
+    // Clear & Hide timer-display
+    if (this.ui.timerDisplay) {
+      this.ui.timerDisplay = "";
+      this.ui.timerDisplay.classList.add("hidden");
     }
   }
 }
