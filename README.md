@@ -4,9 +4,9 @@
 
 
 
-# 🎧 Skyyy’s Ambient Mixer
+# 🎧 Skyy’s Ambient Mixer
 
-**Skyyy’s Ambient Mixer** is a browser-based ambient sound mixer that lets users create, save, and manage custom soundscapes for focus, relaxation, and sleep. It features layered looping audio, fine-grained volume control, presets, timers, and persistent settings — all built with vanilla JavaScript and modern UI patterns.
+**Skyy’s Ambient Mixer** is a browser-based ambient sound mixer that lets users create, save, and manage custom soundscapes for focus, relaxation, and sleep. It features layered looping audio, fine-grained volume control, presets, timers, and persistent settings — all built with vanilla JavaScript and modern UI patterns.
 
 ---
 
