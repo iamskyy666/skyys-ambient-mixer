@@ -103,7 +103,7 @@ No frameworks. No dependencies. Fast and lightweight.
 
 ## 📌 Project Status
 
-Skyyy’s Ambient Mixer is **fully functional** and ready for extension.
+Skyy’s Ambient Mixer is **fully functional** and ready for extension.
 Possible future enhancements include:
 
 * Export / import presets
